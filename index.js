@@ -109,6 +109,54 @@ app.get('/feed', (req, res) => {
   res.send(`Välkommen till flödessidan, användare ${req.session.username}!`);
 });
 
+app.get('/profile/:username', (req, res) => {
+  const { username } = req.params;
+
+  
+  if (!req.session.userId) {
+    return res.status(401).send('Du måste vara inloggad för att se denna sida.');
+  }
+
+  const query = 'SELECT id, username, name, email, age, workplace, school, bio FROM users WHERE username = ?';
+  db.execute(query, [username], (err, results) => {
+    if (err) {
+      console.error('Fel vid hämtning av profil:', err);
+      return res.status(500).send('Serverfel, försök igen senare.');
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send('Användare hittades inte.');
+    }
+
+    const user = results[0];
+
+    const isOwner = req.session.userId === user.id;
+
+    //res.render('profile', { user, isOwner });
+    res.json({ user, isOwner });
+
+  });
+});
+
+app.post('/profile', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).send('Du måste vara inloggad för att uppdatera din profil.');
+  }
+
+  const { name, email, age, workplace, school, bio } = req.body;
+  const query = 'UPDATE users SET name = ?, email = ?, age = ?, workplace = ?, school = ?, bio = ? WHERE id = ?';
+  
+  db.execute(query, [name, email, age, workplace, school, bio, req.session.userId], (err, result) => {
+    if (err) {
+      console.error('Fel vid uppdatering av profil:', err);
+      return res.status(500).send('Serverfel, försök igen senare.');
+    }
+
+    res.send('Profil uppdaterad!');
+  });
+});
+
+
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
