@@ -40,10 +40,10 @@ app.get('/', (req, res) => {
 
 
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, name, age, email } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).send('Användarnamn och lösenord är obligatoriska!');
+  if (!username || !password || !name || !age || !email) {
+    return res.status(400).send('Du har glömt att fylla i någon av följande: Användarnamn, lösenord, namn, ålder eller email');
   }
 
   try {
@@ -51,8 +51,8 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
 
-    const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
-    db.execute(query, [username, hashedPassword], (err, result) => {
+    const query = 'INSERT INTO users (username, password, name, age, email) VALUES (?, ?, ?, ?, ?)';
+    db.execute(query, [username, hashedPassword, name, age, email], (err, result) => {
       if (err) {
         console.error('Fel vid registrering:', err);
         return res.status(500).send('Serverfel, försök igen senare.');
