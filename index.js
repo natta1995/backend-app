@@ -1,4 +1,5 @@
 require('dotenv').config();
+const session = require('express-session');
 
 const express = require('express');
 const mysql = require('mysql2');
@@ -10,6 +11,13 @@ const port = process.env.DB_PORT;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use(session({
+  secret: process.env.SESSION_SECRET, 
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } 
+}));
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,  
@@ -80,7 +88,9 @@ app.post('/login', (req, res) => {
     try {
       const match = await bcrypt.compare(password, user.password);
       if (match) {
-        res.send('Inloggning lyckades!');
+        req.session.userId = user.id; 
+        req.session.username = user.username;
+        res.redirect('/feed'); 
       } else {
         res.status(401).send('Felaktigt användarnamn eller lösenord.');
       }
@@ -90,6 +100,15 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+app.get('/feed', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).send('Du måste vara inloggad för att se denna sida.');
+  }
+
+  res.send(`Välkommen till flödessidan, användare ${req.session.username}!`);
+});
+
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
