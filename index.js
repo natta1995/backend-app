@@ -156,6 +156,39 @@ app.post('/profile', (req, res) => {
   });
 });
 
+app.post('/friends/request', (req, res) => {
+  const { friendId } = req.body;
+
+  if (!req.session.userId) {
+      return res.status(401).send('Du måste vara inloggad för att skicka en vänförfrågan.');
+  }
+
+  const query = 'INSERT INTO friends (userId, friendId, status) VALUES (?, ?, "pending")';
+  db.execute(query, [req.session.userId, friendId], (err, result) => {
+      if (err) {
+          console.error('Fel vid skapande av vänförfrågan:', err);
+          console.log('Friend ID:', friendId);
+          console.log('Request Body:', req.body);
+
+          return res.status(500).send('Serverfel, försök igen senare.');
+      }
+
+      res.send('Vänförfrågan skickad!');
+  });
+});
+
+app.get('/users', (req, res) => {
+  const query = 'SELECT id, username, name FROM users';
+  db.execute(query, (err, results) => {
+    if (err) {
+      console.error('Fel vid hämtning av användare:', err);
+      return res.status(500).send('Serverfel, försök igen senare.');
+    }
+
+    res.json(results);
+  });
+});
+
 
 
 app.listen(port, () => {
