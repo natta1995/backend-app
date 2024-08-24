@@ -19,9 +19,11 @@ app.use(session({
 
 const userRoutes = require('./routes/users');
 const friendRoutes = require('./routes/friends');
+const feedRoutes = require('./routes/feed');
 
 app.use('/users', userRoutes);
 app.use('/friends', friendRoutes);
+app.use('/feed', feedRoutes);
 
 app.get('/', (req, res) => {
   res.send('Servern är igång!');
