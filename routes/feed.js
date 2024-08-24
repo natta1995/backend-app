@@ -54,4 +54,35 @@ router.post('/create', (req, res) => {
 });
 
 
+router.delete('/:id', (req, res) => {
+    const postId = req.params.id;
+
+    if (!req.session.userId) {
+        return res.status(401).send('Du måste vara inloggad för att ta bort ett inlägg.');
+    }
+
+    const query = 'SELECT * FROM feed WHERE id = ? AND userId = ?';
+    db.execute(query, [postId, req.session.userId], (err, results) => {
+        if (err) {
+            console.error('Fel vid hämtning av inlägg:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        if (results.length === 0) {
+            return res.status(403).send('Du har inte behörighet att ta bort detta inlägg.');
+        }
+
+        const deleteQuery = 'DELETE FROM feed WHERE id = ?';
+        db.execute(deleteQuery, [postId], (err, result) => {
+            if (err) {
+                console.error('Fel vid borttagning av inlägg:', err);
+                return res.status(500).send('Serverfel, försök igen senare.');
+            }
+
+            res.send('Inlägg borttaget!');
+        });
+    });
+});
+
+
 module.exports = router;
