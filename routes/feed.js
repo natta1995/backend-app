@@ -31,7 +31,6 @@ router.get('/', (req, res) => {
 });
 
 
-
 router.post('/create', (req, res) => {
     const { content } = req.body;
 
