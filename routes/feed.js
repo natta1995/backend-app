@@ -49,7 +49,7 @@ router.post('/create', (req, res) => {
             return res.status(500).send('Serverfel, försök igen senare.');
         }
 
-        res.send('Inlägg skapat!');
+        res.json({ message: 'Inlägg skapat!', postId: result.insertId });
     });
 });
 
