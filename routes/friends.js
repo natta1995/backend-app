@@ -25,13 +25,17 @@ router.post('/request', (req, res) => {
     });
   });
 
-
-router.get('/requests', (req, res) => {
+  router.get('/requests', (req, res) => {
     if (!req.session.userId) {
         return res.status(401).send('Du måste vara inloggad för att se dina vänförfrågningar.');
     }
 
-    const query = 'SELECT * FROM friends WHERE friendId = ? AND status = "pending"';
+    const query = `
+        SELECT f.id, u.username, u.name 
+        FROM friends f
+        JOIN users u ON f.userId = u.id
+        WHERE f.friendId = ? AND f.status = "pending"
+    `;
     db.execute(query, [req.session.userId], (err, results) => {
         if (err) {
             console.error('Fel vid hämtning av vänförfrågningar:', err);
@@ -40,7 +44,7 @@ router.get('/requests', (req, res) => {
 
         res.json(results);
     });
-});
+})
 
 
 router.post('/respond', (req, res) => {

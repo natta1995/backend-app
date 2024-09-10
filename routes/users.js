@@ -109,6 +109,7 @@ router.get('/profile/:username', (req, res) => {
   });
 
 
+
 router.get('/profile', (req, res) => {
     if (!req.session.userId) {
       return res.status(401).send('Du måste vara inloggad för att se din profil.');
