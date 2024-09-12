@@ -115,7 +115,7 @@ router.get('/profile', (req, res) => {
       return res.status(401).send('Du måste vara inloggad för att se din profil.');
     }
   
-    const query = 'SELECT username, name, email, age, workplace, school, bio FROM users WHERE id = ?';
+    const query = 'SELECT id, username, name, email, age, workplace, school, bio FROM users WHERE id = ?';
     db.execute(query, [req.session.userId], (err, results) => {
       if (err) {
         console.error('Fel vid hämtning av profil:', err);
