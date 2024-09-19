@@ -84,5 +84,76 @@ router.delete('/:id', (req, res) => {
     });
 });
 
+router.get('/:feedId/comments', (req, res) => {
+    const feedId = req.params.feedId;
+
+    const query = 'SELECT comments.*, users.username FROM comments JOIN users ON comments.user_id = users.id WHERE post_id = ? ORDER BY comments.created_at DESC';
+    db.execute(query, [feedId], (err, results) => {
+        if (err) {
+            console.error('Fel vid hämtning av kommentarer:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        res.json(results);
+    });
+});
+
+router.post('/:feedId/comments', (req, res) => {
+    const { content } = req.body;
+    const feedId = req.params.feedId;
+
+    if (!req.session.userId) {
+        return res.status(401).send('Du måste vara inloggad för att kommentera.');
+    }
+
+    if (!content || content.trim() === "") {
+        return res.status(400).send('Kommentaren kan inte vara tom.');
+    }
+
+    const query = 'INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)';
+    db.execute(query, [feedId, req.session.userId, content], (err, result) => {
+        if (err) {
+            console.error('Fel vid skapande av kommentar:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        res.json({ message: 'Kommentar tillagd!', commentId: result.insertId });
+    });
+});
+
+router.delete('/comments/:commentId', (req, res) => {
+    const commentId = req.params.commentId;
+
+    if (!req.session.userId) {
+        return res.status(401).send('Du måste vara inloggad för att ta bort en kommentar.');
+    }
+
+    // Kontrollera att användaren äger kommentaren
+    const query = 'SELECT * FROM comments WHERE id = ? AND user_id = ?';
+    db.execute(query, [commentId, req.session.userId], (err, results) => {
+        if (err) {
+            console.error('Fel vid hämtning av kommentar:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        // Om kommentaren inte finns eller användaren inte äger den
+        if (results.length === 0) {
+            return res.status(403).send('Du har inte behörighet att ta bort denna kommentar.');
+        }
+
+        // Ta bort kommentaren om användaren äger den
+        const deleteQuery = 'DELETE FROM comments WHERE id = ?';
+        db.execute(deleteQuery, [commentId], (err, result) => {
+            if (err) {
+                console.error('Fel vid borttagning av kommentar:', err);
+                return res.status(500).send('Serverfel, försök igen senare.');
+            }
+
+            res.send('Kommentar borttagen!');
+        });
+    });
+});
+
+
 
 module.exports = router;
