@@ -42,16 +42,35 @@ router.post('/create', (req, res) => {
         return res.status(400).send('Innehållet i inlägget kan inte vara tomt.');
     }
 
-    const query = 'INSERT INTO feed (userId, content) VALUES (?, ?)';
-    db.execute(query, [req.session.userId, content], (err, result) => {
+    // Skapa inlägget först
+    const insertQuery = 'INSERT INTO feed (userId, content) VALUES (?, ?)';
+    db.execute(insertQuery, [req.session.userId, content], (err, result) => {
         if (err) {
             console.error('Fel vid skapande av inlägg:', err);
             return res.status(500).send('Serverfel, försök igen senare.');
         }
 
-        res.json({ message: 'Inlägg skapat!', postId: result.insertId });
+        const postId = result.insertId;
+
+        // Hämta det skapade inlägget med användarnamn
+        const fetchQuery = `
+            SELECT feed.id, feed.content, feed.createdAt, users.username 
+            FROM feed 
+            JOIN users ON feed.userId = users.id 
+            WHERE feed.id = ?
+        `;
+        db.execute(fetchQuery, [postId], (err, postResults) => {
+            if (err) {
+                console.error('Fel vid hämtning av inlägg:', err);
+                return res.status(500).send('Serverfel, försök igen senare.');
+            }
+
+            // Returnera hela det skapade inlägget
+            res.json(postResults[0]);
+        });
     });
 });
+
 
 
 router.delete('/:id', (req, res) => {
@@ -110,16 +129,34 @@ router.post('/:feedId/comments', (req, res) => {
         return res.status(400).send('Kommentaren kan inte vara tom.');
     }
 
-    const query = 'INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)';
-    db.execute(query, [feedId, req.session.userId, content], (err, result) => {
+    const insertQuery = 'INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)';
+    db.execute(insertQuery, [feedId, req.session.userId, content], (err, result) => {
         if (err) {
             console.error('Fel vid skapande av kommentar:', err);
             return res.status(500).send('Serverfel, försök igen senare.');
         }
 
-        res.json({ message: 'Kommentar tillagd!', commentId: result.insertId });
+        const commentId = result.insertId;
+
+        
+        const fetchQuery = `
+            SELECT comments.id, comments.content, comments.created_at AS createdAt, users.username
+            FROM comments 
+            JOIN users ON comments.user_id = users.id 
+            WHERE comments.id = ?
+        `;
+        db.execute(fetchQuery, [commentId], (err, commentResults) => {
+            if (err) {
+                console.error('Fel vid hämtning av kommentar:', err);
+                return res.status(500).send('Serverfel, försök igen senare.');
+            }
+
+           
+            res.json(commentResults[0]);
+        });
     });
 });
+
 
 router.delete('/comments/:commentId', (req, res) => {
     const commentId = req.params.commentId;
