@@ -30,6 +30,7 @@ const feedRoutes = require('./routes/feed');
 app.use('/users', userRoutes);
 app.use('/friends', friendRoutes);
 app.use('/feed', feedRoutes);
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
   res.send('Servern är igång!');

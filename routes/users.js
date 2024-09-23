@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const db = require('../config/database');
+const upload = require('../config/multerConfig');
 
 const router = express.Router();
 
@@ -115,7 +116,7 @@ router.get('/profile', (req, res) => {
       return res.status(401).send('Du måste vara inloggad för att se din profil.');
     }
   
-    const query = 'SELECT id, username, name, email, age, workplace, school, bio FROM users WHERE id = ?';
+    const query = 'SELECT id, username, name, email, age, workplace, school, bio, profile_image FROM users WHERE id = ?';
     db.execute(query, [req.session.userId], (err, results) => {
       if (err) {
         console.error('Fel vid hämtning av profil:', err);
@@ -148,6 +149,32 @@ router.post('/profile', (req, res) => {
       res.send('Profil uppdaterad!');
     });
   });
+
+  router.post('/profile-image', upload.single('image'), (req, res) => {
+    try {
+      const userId = req.session.userId; 
+      if (!userId) {
+        return res.status(401).json({ error: 'Du måste vara inloggad för att uppdatera profilbilden.' });
+      }
+  
+      const profileImagePath = `/uploads/${req.file.filename}`; 
+  
+
+      db.execute('UPDATE users SET profile_image = ? WHERE id = ?', [profileImagePath, userId], (err, result) => {
+        if (err) {
+          console.error('Fel vid uppdatering av profilbild:', err);
+          return res.status(500).json({ error: 'Fel vid uppladdning av profilbild' });
+        }
+  
+        res.status(200).json({ message: 'Profilbilden uppdaterades' });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Fel vid uppladdning av profilbild' });
+    }
+  });
+  
+  
 
 
 router.get('/feed', (req, res) => {
