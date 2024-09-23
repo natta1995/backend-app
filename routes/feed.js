@@ -10,7 +10,7 @@ router.get('/', (req, res) => {
     }
 
     const query = `
-        SELECT posts.id, posts.content, posts.createdAt, users.username 
+        SELECT posts.id, posts.content, posts.createdAt, users.username, users.profile_image 
         FROM feed posts 
         JOIN users ON posts.userId = users.id
         WHERE posts.userId = ? OR posts.userId IN (
@@ -29,6 +29,7 @@ router.get('/', (req, res) => {
         res.json(results);
     });
 });
+
 
 
 router.post('/create', (req, res) => {
