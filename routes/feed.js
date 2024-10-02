@@ -107,7 +107,7 @@ router.delete('/:id', (req, res) => {
 router.get('/:feedId/comments', (req, res) => {
     const feedId = req.params.feedId;
 
-    const query = 'SELECT comments.*, users.username FROM comments JOIN users ON comments.user_id = users.id WHERE post_id = ? ORDER BY comments.created_at DESC';
+    const query = 'SELECT comments.*, users.username, users.profile_image FROM comments JOIN users ON comments.user_id = users.id WHERE post_id = ? ORDER BY comments.created_at DESC';
     db.execute(query, [feedId], (err, results) => {
         if (err) {
             console.error('Fel vid hämtning av kommentarer:', err);
