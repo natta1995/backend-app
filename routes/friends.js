@@ -31,7 +31,7 @@ router.post('/request', (req, res) => {
     }
 
     const query = `
-        SELECT f.id, u.username, u.name 
+        SELECT f.id, u.username, u.name, u.profile_image
         FROM friends f
         JOIN users u ON f.userId = u.id
         WHERE f.friendId = ? AND f.status = "pending"
@@ -73,7 +73,7 @@ router.get('/list', (req, res) => {
     }
 
     const query = `
-        SELECT u.id, u.username, u.name 
+        SELECT u.id, u.username, u.name, profile_image
         FROM users u
         JOIN friends f ON (u.id = f.userId OR u.id = f.friendId)
         WHERE (f.userId = ? OR f.friendId = ?) AND f.status = 'accepted' AND u.id != ?;

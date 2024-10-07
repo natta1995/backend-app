@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 router.get('/userslist', (req, res) => {
-    const query = 'SELECT id, username, name FROM users';
+    const query = 'SELECT id, username, name, profile_image FROM users';
     db.execute(query, (err, results) => {
       if (err) {
         console.error('Fel vid hämtning av användare:', err);
