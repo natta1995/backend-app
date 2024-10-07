@@ -55,7 +55,7 @@ router.post('/create', (req, res) => {
 
         // Hämta det skapade inlägget med användarnamn
         const fetchQuery = `
-            SELECT feed.id, feed.content, feed.createdAt, users.username 
+            SELECT feed.id, feed.content, feed.createdAt, users.username, users.profile_image
             FROM feed 
             JOIN users ON feed.userId = users.id 
             WHERE feed.id = ?
@@ -130,7 +130,7 @@ router.post('/:feedId/comments', (req, res) => {
         return res.status(400).send('Kommentaren kan inte vara tom.');
     }
 
-    const insertQuery = 'INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)';
+    const insertQuery = 'INSERT INTO comments (post_id, user_id,  content) VALUES (?, ?, ?)';
     db.execute(insertQuery, [feedId, req.session.userId, content], (err, result) => {
         if (err) {
             console.error('Fel vid skapande av kommentar:', err);
