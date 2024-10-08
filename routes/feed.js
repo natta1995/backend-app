@@ -141,7 +141,7 @@ router.post('/:feedId/comments', (req, res) => {
 
         
         const fetchQuery = `
-            SELECT comments.id, comments.content, comments.created_at AS createdAt, users.username
+            SELECT comments.id, comments.content, comments.created_at, users.username, users.profile_image
             FROM comments 
             JOIN users ON comments.user_id = users.id 
             WHERE comments.id = ?
