@@ -132,49 +132,33 @@ router.get('/profile', (req, res) => {
   });
 
 
-router.post('/profile', (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).send('Du måste vara inloggad för att uppdatera din profil.');
+
+  router.post('/profile', upload.single('image'), (req, res) => {
+    const { name, email, age, workplace, school, bio, profile_image } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+        return res.status(401).send('Du måste vara inloggad för att uppdatera din profil.');
     }
-  
-    const { name, email, age, workplace, school, bio } = req.body;
-    const query = 'UPDATE users SET name = ?, email = ?, age = ?, workplace = ?, school = ?, bio = ? WHERE id = ?';
-    
-    db.execute(query, [name, email, age, workplace, school, bio, req.session.userId], (err, result) => {
-      if (err) {
-        console.error('Fel vid uppdatering av profil:', err);
-        return res.status(500).send('Serverfel, försök igen senare.');
-      }
-  
-      res.send('Profil uppdaterad!');
-    });
-  });
 
-  router.post('/profile-image', upload.single('image'), (req, res) => {
-    try {
-      const userId = req.session.userId; 
-      if (!userId) {
-        return res.status(401).json({ error: 'Du måste vara inloggad för att uppdatera profilbilden.' });
-      }
-  
-      const profileImagePath = `/uploads/${req.file.filename}`; 
-  
+    let profileImagePath = profile_image; 
 
-      db.execute('UPDATE users SET profile_image = ? WHERE id = ?', [profileImagePath, userId], (err, result) => {
+  
+    if (req.file) {
+        profileImagePath = `/uploads/${req.file.filename}`;
+    }
+
+    const query = 'UPDATE users SET name = ?, email = ?, age = ?, workplace = ?, school = ?, bio = ?, profile_image = ? WHERE id = ?';
+    db.execute(query, [name, email, age, workplace, school, bio, profileImagePath, userId], (err, result) => {
         if (err) {
-          console.error('Fel vid uppdatering av profilbild:', err);
-          return res.status(500).json({ error: 'Fel vid uppladdning av profilbild' });
+            console.error('Fel vid uppdatering av profil:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
         }
-  
-        res.status(200).json({ message: 'Profilbilden uppdaterades' });
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Fel vid uppladdning av profilbild' });
-    }
-  });
-  
-  
+
+        res.send('Profil uppdaterad!');
+    });
+});
+
 
 
 router.get('/feed', (req, res) => {
