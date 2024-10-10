@@ -44,41 +44,44 @@ router.post('/register', async (req, res) => {
   });
   
 
-router.post('/login', (req, res) => {
+  router.post('/login', (req, res) => {
     const { username, password } = req.body;
-  
+
     if (!username || !password) {
-      return res.status(400).send('Användarnamn och lösenord är obligatoriska!');
+      return res.status(400).json({ success: false, message: 'Användarnamn och lösenord är obligatoriska!' });
     }
-  
+
     const query = 'SELECT * FROM users WHERE username = ?';
     db.execute(query, [username], async (err, results) => {
       if (err) {
         console.error('Fel vid inloggning:', err);
-        return res.status(500).send('Serverfel, försök igen senare.');
+        return res.status(500).json({ success: false, message: 'Serverfel, försök igen senare.' });
       }
-  
+
       if (results.length === 0) {
-        return res.status(401).send('Felaktigt användarnamn eller lösenord.');
+        return res.status(401).json({ success: false, message: 'Felaktigt användarnamn eller lösenord.' });
       }
-  
+
       const user = results[0];
-  
+
       try {
         const match = await bcrypt.compare(password, user.password);
         if (match) {
-          req.session.userId = user.id; 
+          // Sätt session
+          req.session.userId = user.id;
           req.session.username = user.username;
-          res.redirect('/users/feed'); 
+          
+          // Returnera JSON-respons istället för redirect
+          return res.status(200).json({ success: true, message: 'Inloggning lyckades', username: user.username });
         } else {
-          res.status(401).send('Felaktigt användarnamn eller lösenord.');
+          return res.status(401).json({ success: false, message: 'Felaktigt användarnamn eller lösenord.' });
         }
       } catch (err) {
         console.error('Fel vid lösenordsjämförelse:', err);
-        res.status(500).send('Serverfel, försök igen senare.');
+        return res.status(500).json({ success: false, message: 'Serverfel, försök igen senare.' });
       }
     });
-  });
+});
 
 
 router.get('/profile/:username', (req, res) => {
