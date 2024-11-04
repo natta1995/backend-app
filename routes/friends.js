@@ -4,6 +4,8 @@ const db = require('../config/database')
 const router = express.Router();
 
 
+
+
 router.post('/request', (req, res) => {
     const { friendId } = req.body;
   
