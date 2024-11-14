@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../config/database');
+const upload = require("../config/multerConfig");
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.get('/', (req, res) => {
     }
 
     const query = `
-        SELECT posts.id, posts.content, posts.createdAt, users.username, users.profile_image 
+        SELECT posts.id, posts.content, posts.createdAt, posts.image_url, users.username, users.profile_image 
         FROM feed posts 
         JOIN users ON posts.userId = users.id
         WHERE posts.userId = ? OR posts.userId IN (
@@ -32,7 +33,7 @@ router.get('/', (req, res) => {
 
 
 
-router.post('/create', (req, res) => {
+router.post('/create', upload.single('image'), (req, res) => {
     const { content } = req.body;
 
     if (!req.session.userId) {
@@ -43,9 +44,12 @@ router.post('/create', (req, res) => {
         return res.status(400).send('Innehållet i inlägget kan inte vara tomt.');
     }
 
-    // Skapa inlägget först
-    const insertQuery = 'INSERT INTO feed (userId, content) VALUES (?, ?)';
-    db.execute(insertQuery, [req.session.userId, content], (err, result) => {
+    // Om en bild laddades upp, skapa bild-URL, annars sätt den till null
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // Skapa inlägget och spara både innehåll och bild-URL
+    const insertQuery = 'INSERT INTO feed (userId, content, image_url) VALUES (?, ?, ?)';
+    db.execute(insertQuery, [req.session.userId, content, imageUrl], (err, result) => {
         if (err) {
             console.error('Fel vid skapande av inlägg:', err);
             return res.status(500).send('Serverfel, försök igen senare.');
@@ -53,9 +57,9 @@ router.post('/create', (req, res) => {
 
         const postId = result.insertId;
 
-        // Hämta det skapade inlägget med användarnamn
+        // Hämta det skapade inlägget med användarnamn och bild-URL
         const fetchQuery = `
-            SELECT feed.id, feed.content, feed.createdAt, users.username, users.profile_image
+            SELECT feed.id, feed.content, feed.createdAt, feed.image_url, users.username, users.profile_image
             FROM feed 
             JOIN users ON feed.userId = users.id 
             WHERE feed.id = ?
