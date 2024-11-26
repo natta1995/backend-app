@@ -134,6 +134,49 @@ router.post("/:feedId/like", (req, res) => {
   });
 });
 
+router.delete("/:feedId/like", (req, res) => {
+  const { feedId } = req.params;
+  const userId = req.session.userId
+
+  if (!userId) {
+    return res.status(401).json({ message: "Användaren är inte inloggad." });
+  }
+
+  const query = "SELECT likes FROM feed WHERE id = ?";
+  db.execute(query, [feedId], (err, results) => {
+    if (err) {
+      console.error("Fel vid hämtning av likes:", err);
+      return res.status(500).send("Serverfel, försök igen senare.");
+    }
+
+    console.log("Likes före uppdatering:", results);
+
+    if (results.length === 0) {
+      return res.status(404).send("Inlägget kunde inte hittas.");
+    }
+
+    let likes = results[0].likes || [];
+    if (!Array.isArray(likes)) {
+      likes = [];
+    }
+
+    // Ta bort användarens ID från likes
+    likes = likes.filter((id) => id !== userId);
+
+    const updateQuery = "UPDATE feed SET likes = ? WHERE id = ?";
+    db.execute(updateQuery, [JSON.stringify(likes), feedId], (err) => {
+      if (err) {
+        console.error("Fel vid uppdatering av likes:", err);
+        return res.status(500).send("Serverfel, försök igen senare.");
+      }
+
+      console.log("Likes efter uppdatering:", likes);
+      res.json({ message: "Like borttagen", likes });
+    });
+  });
+});
+
+
 router.delete("/:id", (req, res) => {
   const postId = req.params.id;
 
