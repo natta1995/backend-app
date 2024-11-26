@@ -76,6 +76,53 @@ router.post('/create', upload.single('image'), (req, res) => {
     });
 });
 
+router.post('/:feedId/like', (req, res) => {
+    const feedId = req.params.feedId;
+
+    if (!req.session.userId) {
+        return res.status(401).send('Du måste vara inloggad för att gilla ett inlägg.');
+    }
+
+    const query = 'SELECT likes FROM feed WHERE id = ?';
+    db.execute(query, [feedId], (err, results) => {
+        if (err) {
+            console.error('Fel vid hämtning av likes:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        if (results.length === 0) {
+            return res.status(404).send('Inlägget kunde inte hittas.');
+        }
+
+        // Logga likes för felsökning
+        console.log('Raw likes from database:', results[0].likes);
+
+        let likes = results[0].likes;
+
+        // Säkerställ att likes är en array
+        if (!Array.isArray(likes)) {
+            console.warn('Likes är inte en array, initierar som tom array.');
+            likes = [];
+        }
+
+        const userId = req.session.userId;
+
+        // Lägg till användaren om de inte redan gillat
+        if (!likes.includes(userId)) {
+            likes.push(userId);
+        }
+
+        const updateQuery = 'UPDATE feed SET likes = ? WHERE id = ?';
+        db.execute(updateQuery, [JSON.stringify(likes), feedId], (err) => {
+            if (err) {
+                console.error('Fel vid uppdatering av likes:', err);
+                return res.status(500).send('Serverfel, försök igen senare.');
+            }
+
+            res.json({ message: 'Like tillagd!', likesCount: likes.length });
+        });
+    });
+});
 
 
 router.delete('/:id', (req, res) => {
