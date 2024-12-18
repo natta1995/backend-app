@@ -50,6 +50,55 @@ router.post("/register", async (req, res) => {
   }
 });
 
+
+router.delete("/delete/account", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).send("Du måste ange ett användar-ID för att ta bort ett konto.");
+  }
+
+  try {
+    // Ta bort relationer från vänner-tabellen där användaren är "friendId"
+    const deleteFriendsAsFriendQuery = "DELETE FROM friends WHERE friendId = ?";
+    db.execute(deleteFriendsAsFriendQuery, [userId], (err, result) => {
+      if (err) {
+        console.error("Fel vid borttagning av vänner (som friendId):", err);
+        return res.status(500).send("Serverfel vid borttagning av vänrelationer.");
+      }
+
+      // Ta bort relationer från vänner-tabellen där användaren är "userId"
+      const deleteFriendsAsUserQuery = "DELETE FROM friends WHERE userId = ?";
+      db.execute(deleteFriendsAsUserQuery, [userId], (err, result) => {
+        if (err) {
+          console.error("Fel vid borttagning av vänner (som userId):", err);
+          return res.status(500).send("Serverfel vid borttagning av vänrelationer.");
+        }
+
+        // Ta bort användaren från users-tabellen
+        const deleteUserQuery = "DELETE FROM users WHERE id = ?";
+        db.execute(deleteUserQuery, [userId], (err, result) => {
+          if (err) {
+            console.error("Fel vid borttagning av konto:", err);
+            return res.status(500).send("Serverfel vid borttagning av konto.");
+          }
+
+          if (result.affectedRows === 0) {
+            return res.status(404).send("Användare hittades inte.");
+          }
+
+          res.send("Kontot och alla relaterade data har tagits bort.");
+        });
+      });
+    });
+  } catch (err) {
+    console.error("Fel vid hantering av borttagning:", err);
+    res.status(500).send("Serverfel, försök igen senare.");
+  }
+});
+
+
+
 router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
