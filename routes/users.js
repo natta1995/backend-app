@@ -17,6 +17,14 @@ router.get("/userslist", (req, res) => {
   });
 });
 
+// Funktion för att validera lösenord
+
+const validatePassword = (password) => {
+  // Minst 8 tecken, en stor bokstav, en liten bokstav, en siffra och ett specialtecken
+  const passwordRegex = /^(?=.*[a-zåäö])(?=.*[A-ZÅÄÖ])(?=.*\d)(?=.*[@$!%*?&])[A-Za-zÅÄÖåäö\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
 router.post("/register", async (req, res) => {
   const { username, password, name, age, email } = req.body;
 
@@ -25,6 +33,14 @@ router.post("/register", async (req, res) => {
       .status(400)
       .send(
         "Du har glömt att fylla i någon av följande: Användarnamn, lösenord, namn, ålder eller email"
+      );
+  }
+
+  if (!validatePassword(password)) {
+    return res
+      .status(400)
+      .send(
+        "Lösenordet måste vara minst 8 tecken långt och innehålla minst en stor bokstav, en liten bokstav, en siffra och ett specialtecken."
       );
   }
 
