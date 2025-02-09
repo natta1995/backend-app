@@ -17,7 +17,7 @@ router.get("/userslist", (req, res) => {
   });
 });
 
-// Funktion för att validera lösenord
+// Funktion för att validera lösenordcd
 
 const validatePassword = (password) => {
   // Minst 8 tecken, en stor bokstav, en liten bokstav, en siffra och ett specialtecken
