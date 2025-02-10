@@ -8,7 +8,8 @@ router.get('/chat/:user1/:user2', async (req, res) => {
 
     try {
         const [messages] = await pool.query(
-            `SELECT * FROM messages 
+            `SELECT id, sender_id, receiver_id, message_text, status, created_at 
+             FROM messages 
              WHERE (sender_id = ? AND receiver_id = ?) 
              OR (sender_id = ? AND receiver_id = ?)
              ORDER BY created_at ASC`,  
@@ -19,7 +20,8 @@ router.get('/chat/:user1/:user2', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-})
+});
+
 
 
 
