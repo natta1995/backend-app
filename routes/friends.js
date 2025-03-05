@@ -4,7 +4,7 @@ const db = require('../config/database')
 const router = express.Router();
 
 
-
+// Send a friend request 
 
 router.post('/request', (req, res) => {
     const { friendId } = req.body;
@@ -48,6 +48,7 @@ router.post('/request', (req, res) => {
     });
 })
 
+// Respond to a friend request (send by someone else )
 
 router.post('/respond', (req, res) => {
     const { requestId, action } = req.body; 
@@ -68,6 +69,7 @@ router.post('/respond', (req, res) => {
     });
 });
 
+// Get the list of all your friends
 
 router.get('/list', (req, res) => {
     if (!req.session.userId) {
@@ -90,6 +92,7 @@ router.get('/list', (req, res) => {
     });
 });
 
+// Remove a user from your friendlist
 
 router.post('/remove', (req, res) => {
     const { friendId } = req.body;
@@ -108,6 +111,32 @@ router.post('/remove', (req, res) => {
         res.send('Vän borttagen!');
     });
 });
+
+
+// Get all the friend request YOU sent to other users
+
+router.get('/sent-requests', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).send('Du måste vara inloggad för att se dina skickade vänförfrågningar.');
+    }
+
+    const query = `
+        SELECT f.friendId, u.username, u.name, u.profile_image
+        FROM friends f
+        JOIN users u ON f.friendId = u.id
+        WHERE f.userId = ? AND f.status = "pending"
+    `;
+
+    db.execute(query, [req.session.userId], (err, results) => {
+        if (err) {
+            console.error('Fel vid hämtning av skickade vänförfrågningar:', err);
+            return res.status(500).send('Serverfel, försök igen senare.');
+        }
+
+        res.json(results);
+    });
+});
+
 
 
 module.exports = router;
